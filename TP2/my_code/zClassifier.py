@@ -31,6 +31,8 @@ import warnings
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore",category=DeprecationWarning)
     import numpy as np
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import LinearSegmentedColormap
     import pickle
     from sklearn.base import BaseEstimator
     from sklearn.ensemble import RandomForestClassifier
@@ -174,6 +176,64 @@ def compute_accuracy(M, D, classifier_name):
 	return acc_tr
 
 
+def ClfScatter(self, clf, dim1=0, dim2=1, title=''):
+        '''(self, clf, dim1=0, dim2=1, title='')
+        Split the training data into 1/2 for training and 1/2 for testing.
+        Display decision function and training or test examples.
+        clf: a classifier with at least a fit and a predict method
+        like a sckit-learn classifier.
+        dim1 and dim2: chosen features.
+        title: Figure title.
+        Returns: Test accuracy.
+        '''
+        X = self.data['X_train']
+        Y = self.data['Y_train']
+        F = self.feat_name
+        # Split the data
+        ntr=round(X.shape[0]/2)
+        nte=X.shape[0]-ntr
+        Xtr = X[0:ntr, (dim1,dim2)]
+        Ytr = Y[0:ntr]
+        Xte = X[ntr+1:ntr+nte, (dim1,dim2)]
+        Yte = Y[ntr+1:ntr+nte]
+        # Fit model in chosen dimensions
+        clf.fit(Xtr, Ytr)
+        # Compute the training score
+        Yhat_tr = clf.predict(Xtr) 
+        training_accuracy = accuracy_score(Ytr, Yhat_tr)
+        # Compute the test score
+        Yhat_te = clf.predict(Xte)  
+        test_accuracy = accuracy_score(Yte, Yhat_te)       
+        # Define a mesh    
+        x_min, x_max = Xtr[:, 0].min() - 1, Xtr[:, 0].max() + 1
+        y_min, y_max = Xtr[:, 1].min() - 1, Xtr[:, 1].max() + 1
+        h = 0.1 # step
+        xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+							 np.arange(y_min, y_max, h))
+        Xgene = np.c_[xx.ravel(), yy.ravel()]
+        # Make your predictions on all mesh grid points (test points)
+        Yhat = clf.predict(Xgene) 
+        # Make contour plot for all points in mesh
+        Yhat = Yhat.reshape(xx.shape)
+        plt.subplot(1, 2, 1)
+        plt.contourf(xx, yy, Yhat, cmap=plt.cm.Paired)
+        # Overlay scatter plot of training examples
+        plt.scatter(Xtr[:, 0], Xtr[:, 1], c=Ytr, cmap=cm)   
+        plt.title('{}: training accuracy = {:5.2f}'.format(title, training_accuracy))
+        plt.xlabel(F[dim1])
+        plt.ylabel(F[dim2])
+        plt.subplot(1, 2, 2)
+        plt.contourf(xx, yy, Yhat, cmap=plt.cm.Paired)
+        # Overlay scatter plot of test examples
+        plt.scatter(Xte[:, 0], Xte[:, 1], c=Yte, cmap=cm)   
+        plt.title('{}: test accuracy = {:5.2f}'.format(title, test_accuracy))
+        plt.xlabel(F[dim1])
+        plt.ylabel(F[dim2])
+        plt.subplots_adjust(left  = 0, right = 1.5, bottom=0, top = 1, wspace=0.2)
+        plt.show()
+        return test_accuracy
+
+
 def test(D):  
     '''Function to try some examples classifiers'''    
     classifier_dict = {
@@ -184,7 +244,8 @@ def test(D):
             
     for key in classifier_dict:
         myclassifier = classifier_dict[key]
-        acc = compute_accuracy(myclassifier, D, key) # Replace by a call to ClfScatter
+        #acc = compute_accuracy(myclassifier, D, key)  # Replace by a call to ClfScatter
+        acc = ClfScatter(D, myclassifier, 0, 1, key) 
               
     return acc # Return the last accuracy (important to get the correct answer in the TP)
     
