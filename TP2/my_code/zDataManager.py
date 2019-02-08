@@ -132,14 +132,13 @@ class DataManager(data_manager.DataManager):
         if set_name == 'train':
             return sns.pairplot(DF, hue='target')
         else:
-            return sns.pairplot(DF, hue='target')
+            return sns.pairplot(DF)
  
 
-    def ShowSomethingElse(self):
-        ''' Surprise me.'''
-        # For your project proposal, provide
-        # a sketch with what you intend to do written in English (or French) is OK.
-        pass
+    def ShowSomethingElse(self, set_name):
+        ''' Show density plots.'''
+        DF = self.toDF(set_name)
+        return DF.plot.density()
         
     ##### END OF YOUR OWN METHODS ######################
     
